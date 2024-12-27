@@ -1,0 +1,17 @@
+FROM ubuntu:24.10
+
+RUN apt-get update -qq && apt-get upgrade -qq
+
+RUN apt-get -y install sudo nano fdisk bsdmainutils git hashcat dislocker make build-essential autoconf
+RUN ln -s /usr/bin/aclocal /usr/bin/aclocal-1.15 && ln -s /usr/bin/automake /usr/bin/automake-1.15
+
+RUN git clone https://github.com/openwall/john && cd ./john/src && ./configure --without-openssl && make
+RUN ln -s /john/run/bitlocker2john /usr/local/bin
+
+COPY wordlist.txt /app/wordlist.txt
+COPY Beweis.dd /app/Beweis.dd
+
+COPY start.sh /app
+RUN chmod +x /app/start.sh
+
+ENTRYPOINT [ "/app/start.sh" ]
