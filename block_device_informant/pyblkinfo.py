@@ -1,3 +1,4 @@
+import os
 import json
 import subprocess
 
@@ -18,8 +19,8 @@ def collect_data():
             DEVICE_PARTITION[device]["device_info"] = {}
             DEVICE_PARTITION[device]["device_info"]["model"] = entry["vendor"].strip() + " " + entry["model"].strip()
             DEVICE_PARTITION[device]["device_info"]["table"] = entry["pttype"]
-            DEVICE_PARTITION[device]["device_info"]["size"] = "{:,}".format(entry["size"]) + " bytes"
-            DEVICE_PARTITION[device]["device_info"]["sectors"] = "{:,}".format(entry["size"] // entry["log-sec"]) + " sectors"
+            DEVICE_PARTITION[device]["device_info"]["size"] = entry["size"]
+            DEVICE_PARTITION[device]["device_info"]["sectors"] = entry["size"] // entry["log-sec"]
             DEVICE_PARTITION[device]["device_info"]["sector_size"] = str(entry["log-sec"])
 
             for entry2 in entry["children"]:
@@ -30,21 +31,20 @@ def collect_data():
                 DEVICE_PARTITION[device][partition] = {}
                 DEVICE_PARTITION[device][partition]["name"] = entry2["name"]
                 DEVICE_PARTITION[device][partition]["label"] = entry2["label"]
-                DEVICE_PARTITION[device][partition]["start"] = "{:,}".format(entry2["start"])
-                DEVICE_PARTITION[device][partition]["end"] = "{:,}".format(entry2["start"] + (entry2["size"] // entry["log-sec"]) - 1)
-                DEVICE_PARTITION[device][partition]["sectors"] = "{:,}".format(entry2["size"] // entry["log-sec"])
-                DEVICE_PARTITION[device][partition]["size"] = "{:,}".format(entry2["size"] * entry["log-sec"])
-                DEVICE_PARTITION[device][partition]["type"] = entry2["fstype"]
-                DEVICE_PARTITION[device][partition]["fs"] = entry2["fsver"]
+                DEVICE_PARTITION[device][partition]["start"] = entry2["start"]
+                DEVICE_PARTITION[device][partition]["end"] = entry2["start"] + (entry2["size"] // entry["log-sec"]) - 1
+                DEVICE_PARTITION[device][partition]["sectors"] = entry2["size"] // entry["log-sec"]
+                DEVICE_PARTITION[device][partition]["size"] = entry2["size"]
+                DEVICE_PARTITION[device][partition]["fs"] = entry2["fstype"] + " " + entry2["fsver"]
     except Exception as e:
         DEVICE_PARTITION[device]["device_info"]["Status"] = "No information available"
-        print(f"Error: {e}")
 
 def output():
     """
     Writes the output to a log file as a dynamically tabulated table and prints it to the console.
     """
-    with open("blkinfo.log", "w") as log_file:
+    log_file = os.path.expanduser("~/blkinfo.log")
+    with open(log_file, "w") as log_file:
         for device in DEVICE_PARTITION:
 
             # device info
@@ -56,24 +56,23 @@ def output():
                 f"Device:  {device}\n"
                 f"Model:   {device_info.get('model', 'N/A')}\n"
                 f"Table:   {device_info.get('table', 'N/A')}\n"
-                f"Size:    {device_info.get('size', 'N/A')}\n"
-                f"Sectors: {device_info.get('sectors', 'N/A')} - Size: {device_info.get('sector_size', 'N/A')} bytes\n"
+                f"Size:    {"{:,}".format(int(device_info.get('size', 0)))} bytes\n"
+                f"Sectors: {"{:,}".format(int(device_info.get('sectors', 'N/A')))} - logical size: {device_info.get('sector_size', 'N/A')} bytes\n"
             )
             
             # partition table
             table_data = []
-            headers = ["Name", "Label", "Start Sector", "End Sector", "Sectors", "Bytes", "Type", "FS"]
+            headers = ["Name", "Label", "Start Sector", "End Sector", "Sectors", "Bytes", "FS"]
             for partition in DEVICE_PARTITION[device]:
                 if partition != "device_info":
                     partition_data = DEVICE_PARTITION[device][partition]
                     table_data.append({
                         "Name": partition_data.get('name', 'N/A'),
                         "Label": partition_data.get('label', 'N/A'),
-                        "Start Sector": str(partition_data.get('start', 'N/A')),
-                        "End Sector": str(partition_data.get('end', 'N/A')),
-                        "Sectors": str(partition_data.get('sectors', 'N/A')),
-                        "Bytes": str(partition_data.get('size', 'N/A')),
-                        "Type": partition_data.get('type', 'N/A'),
+                        "Start Sector": "{:,}".format(int(partition_data.get('start', 0))),
+                        "End Sector": "{:,}".format(int(partition_data.get('end', 0))),
+                        "Sectors": "{:,}".format(int(partition_data.get('sectors', 0))),
+                        "Bytes": "{:,}".format(int(partition_data.get('size', 0))),
                         "FS": partition_data.get('fs', 'N/A')
                     })
 
@@ -99,8 +98,10 @@ def output():
             
             log_file.write("\n")
 
-    with open("blkinfo.log", "r") as log_file:
-        print("\n" + log_file.read())
+    with open(log_file.name, "r") as log_file:
+        print(log_file.read())
+
+    print(f"Output written to {log_file.name}\n")
 
 def main():
     collect_data()
