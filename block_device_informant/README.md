@@ -25,4 +25,15 @@ It uses Linux `lsblk` command to gather information about block devices.
 # Example log
 
 ```
+Device:  sdb
+Model:   General UDisk
+Table:   dos
+Size:    61,865,984 bytes
+Sectors: 120,832 - Size: 512 bytes
+----------------------------------------------------------------------------
+Name | Label | Start Sector | End Sector | Sectors | Bytes      | FS        
+---- | ----- | ------------ | ---------- | ------- | ---------- | ----------
+sdb1 |       | 2,048        | 34,815     | 32,768  | 16,777,216 | vfat FAT16
+sdb2 |       | 34,816       | 67,583     | 32,768  | 16,777,216 | vfat FAT16
+sdb3 |       | 67,584       | 120,831    | 53,248  | 27,262,976 | vfat FAT16
 ```
