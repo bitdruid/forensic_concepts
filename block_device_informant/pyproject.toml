@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyblkinfo"
-version = "0.1.1"
+version = "0.1.2"
 description = "Conceptual bash-shell tracking"
 authors = [
     { name = "bitdruid", email = "bitdruid@outlook.com" }
@@ -23,4 +23,4 @@ requires-python = ">=3.6"
 blkinfo = "pyblkinfo:main"
 
 [project.urls]
-Homepage = "https://github.com/bitdruid/forensic_conepts"
+Homepage = "https://github.com/bitdruid/forensic_concepts"
