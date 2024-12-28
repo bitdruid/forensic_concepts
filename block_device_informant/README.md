@@ -10,7 +10,7 @@ It's purpose is to output basic necessary infos about all attached block devices
 
 However, this project is just a CONCEPT - it demonstrates how one step of documentation COULD be performed as a small part of the entire forensic process. One limitation is that the script does not directly interact with the block devices but rather gathers information through system commands. This means it relies on the accuracy and availability of these commands. Additionally, the script has not been extensively tested with all possible device configurations.
 
-It uses Linux `lsblk` and `fdisk` commands to gather information about block devices.
+It uses Linux `lsblk` command to gather information about block devices.
 
 ## Installation
 

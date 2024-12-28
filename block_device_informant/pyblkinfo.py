@@ -2,64 +2,43 @@ import json
 import subprocess
 
 DEVICE_PARTITION = {}
-PARTITION_TYPE = {}
 
-def load_types():
-    """
-    Loads the partition types from sfdisk --list-types (-T)
-    """
-    output = subprocess.check_output("sfdisk --list-types", shell=True).decode()
-    output = output.split("\n")[1:]
-    for line in output:
-        if line:
-            line = line.split()
-            PARTITION_TYPE[line[0]] = line[1]
-
-def collect_devices():
-    """
-    Collects all block devices and store them into DEVICE_PARTITION{device1: {...}, device2: {...}}
-    """
-    output = subprocess.check_output("lsblk --json -o NAME", shell=True).decode()
+def collect_data():
+    output = subprocess.check_output("lsblk --json -b -o NAME,LABEL,VENDOR,MODEL,PTTYPE,START,SIZE,LOG-SEC,FSTYPE,FSVER", shell=True).decode()
     output = json.loads(output)
     output = output["blockdevices"]
-    for device in output:
-        DEVICE_PARTITION[device["name"]] = {}
-        DEVICE_PARTITION[device["name"]]["device_info"] = {}
 
-def collect_infos():
-    """
-    Reads all devices from DEVICE_PARTITION and stores info into DEVICE_PARTITION_INFO{device1: {device_info: [...], partition1: [...], ...}, device2: {device_info: [...], partition1: [...], ...}}
-    """
-    for device in DEVICE_PARTITION:
-        try:
-            output_device = subprocess.check_output(f"fdisk -l /dev/{device}", shell=True, stderr=subprocess.STDOUT).decode()
-            output_partition = subprocess.check_output(f"sfdisk --json /dev/{device}", shell=True).decode()
-        except subprocess.CalledProcessError as e:
-            DEVICE_PARTITION[device]["device_info"]["Status"] = "No information found"
-            continue
+    try:
+        for entry in output:
+            for key, value in entry.items():
+                if value is None:
+                    entry[key] = ""
+            device = entry["name"]
+            DEVICE_PARTITION[device] = {}
+            DEVICE_PARTITION[device]["device_info"] = {}
+            DEVICE_PARTITION[device]["device_info"]["model"] = entry["vendor"].strip() + " " + entry["model"].strip()
+            DEVICE_PARTITION[device]["device_info"]["table"] = entry["pttype"]
+            DEVICE_PARTITION[device]["device_info"]["size"] = "{:,}".format(entry["size"]) + " bytes"
+            DEVICE_PARTITION[device]["device_info"]["sectors"] = "{:,}".format(entry["size"] // entry["log-sec"]) + " sectors"
+            DEVICE_PARTITION[device]["device_info"]["sector_size"] = str(entry["log-sec"])
 
-        # gets device info
-        device_info = output_device.split("\n")[0]
-        device_info = device_info.split(",")
-        device_info = [i.strip() for i in device_info]
-        DEVICE_PARTITION[device]["device_info"]["model"] = ' '.join(subprocess.check_output(f"lsblk -o VENDOR,MODEL /dev/{device}", shell=True).decode().split("\n")[1].split())
-        DEVICE_PARTITION[device]["device_info"]["table"] = output_device.split("Disklabel type: ")[1].split("\n")[0]
-        DEVICE_PARTITION[device]["device_info"]["size"] = "{:,}".format(int(device_info[-2].split()[0])) + " bytes"
-        DEVICE_PARTITION[device]["device_info"]["sectors"] = "{:,}".format(int(device_info[-1].split()[0])) + " sectors"
-        DEVICE_PARTITION[device]["device_info"]["sector_size"] = output_device.split("Sector size (logical/physical): ")[1].split("bytes /")[0].strip()
-
-        # gets partition info
-        partition_info = json.loads(output_partition)["partitiontable"]["partitions"]
-        for entry in partition_info:
-            partition = entry["node"]
-            DEVICE_PARTITION[device][partition] = {}
-            DEVICE_PARTITION[device][partition]["name"] = entry["node"].split("dev/")[1]
-            DEVICE_PARTITION[device][partition]["start"] = "{:,}".format(int(entry["start"]))
-            DEVICE_PARTITION[device][partition]["end"] = "{:,}".format(int(entry["size"]) + int(entry["start"]) - 1)
-            DEVICE_PARTITION[device][partition]["sectors"] = "{:,}".format(int(entry["size"]))
-            DEVICE_PARTITION[device][partition]["type"] = PARTITION_TYPE[entry["type"]]
-            DEVICE_PARTITION[device][partition]["size"] = "{:,}".format(int(entry["size"]) * int(DEVICE_PARTITION[device]["device_info"]["sector_size"].split("/")[0].split("bytes")[0].strip()))
-            DEVICE_PARTITION[device][partition]["fs"] = ' '.join(subprocess.check_output(f"lsblk -o FSTYPE,FSVER {partition}", shell=True).decode().split("\n")[1].split())
+            for entry2 in entry["children"]:
+                for key, value in entry2.items():
+                    if value is None:
+                        entry2[key] = ""
+                partition = entry2["name"]
+                DEVICE_PARTITION[device][partition] = {}
+                DEVICE_PARTITION[device][partition]["name"] = entry2["name"]
+                DEVICE_PARTITION[device][partition]["label"] = entry2["label"]
+                DEVICE_PARTITION[device][partition]["start"] = "{:,}".format(entry2["start"])
+                DEVICE_PARTITION[device][partition]["end"] = "{:,}".format(entry2["start"] + (entry2["size"] // entry["log-sec"]) - 1)
+                DEVICE_PARTITION[device][partition]["sectors"] = "{:,}".format(entry2["size"] // entry["log-sec"])
+                DEVICE_PARTITION[device][partition]["size"] = "{:,}".format(entry2["size"] * entry["log-sec"])
+                DEVICE_PARTITION[device][partition]["type"] = entry2["fstype"]
+                DEVICE_PARTITION[device][partition]["fs"] = entry2["fsver"]
+    except Exception as e:
+        DEVICE_PARTITION[device]["device_info"]["Status"] = "No information available"
+        print(f"Error: {e}")
 
 def output():
     """
@@ -83,12 +62,13 @@ def output():
             
             # partition table
             table_data = []
-            headers = ["Name", "Start Sector", "End Sector", "Sectors", "Bytes", "Type", "FS"]
+            headers = ["Name", "Label", "Start Sector", "End Sector", "Sectors", "Bytes", "Type", "FS"]
             for partition in DEVICE_PARTITION[device]:
                 if partition != "device_info":
                     partition_data = DEVICE_PARTITION[device][partition]
                     table_data.append({
                         "Name": partition_data.get('name', 'N/A'),
+                        "Label": partition_data.get('label', 'N/A'),
                         "Start Sector": str(partition_data.get('start', 'N/A')),
                         "End Sector": str(partition_data.get('end', 'N/A')),
                         "Sectors": str(partition_data.get('sectors', 'N/A')),
@@ -123,9 +103,7 @@ def output():
         print("\n" + log_file.read())
 
 def main():
-    load_types()
-    collect_devices()
-    collect_infos()
+    collect_data()
     output()
 
 if __name__ == "__main__":
