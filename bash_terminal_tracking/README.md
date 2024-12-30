@@ -1,6 +1,7 @@
 [![PyPI](https://img.shields.io/pypi/v/pybashproof)](https://pypi.org/project/pybashproof/)
 ![Python Version](https://img.shields.io/badge/Python-3.6-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-orange)](https://ubuntu.com/download/desktop)
 
 # bashproof
 
@@ -8,7 +9,7 @@ This little project is just a conceptual work used for my thesis about documenta
 
 It's purpose is to log the input/output of the bash terminal in a readable and evidentiary way. Forensic staff would be able to prove any of their actions when confronted with digital evidence.
 
-However, this project is just a CONCEPT - it only shows how one step of documentation COULD be done as a small part of the whole project. One problem is that the script does not directly start an interactive shell in the traditional sense, but simulates one by creating a custom shell-like environment. A sub-process is used to pipe the input to bash and receive stdout/stderr accordingly. Because of this, you cannot use auto-completion. Also, I have not tested complex input.
+However, this project is just a CONCEPT - it shows how one step of documentation COULD be done - or moreover, what kind of output would be useful - as a small part of the overall forensic process. One problem is that the script does not directly start an interactive shell in the traditional sense, but simulates one by creating a custom shell-like environment. A sub-process is used to pipe the input to bash and receive stdout/stderr accordingly. Because of this, you cannot use auto-completion. Also, I have not tested complex input.
 
 There is the Linux `script` utility, but it lacks good timestamping and readability.
 

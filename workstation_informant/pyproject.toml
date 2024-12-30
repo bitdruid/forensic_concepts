@@ -3,9 +3,9 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pybashproof"
-version = "0.1.1"
-description = "Conceptual bash-shell tracking and logging."
+name = "pywrkstinfo"
+version = "0.1.0"
+description = "Conceptual workstation information output."
 authors = [
     { name = "bitdruid", email = "bitdruid@outlook.com" }
 ]
@@ -20,7 +20,7 @@ classifiers = [
 requires-python = ">=3.6"
 
 [project.scripts]
-bashproof = "pybashproof:main"
+blkinfo = "pywrkstinfo:main"
 
 [project.urls]
 Homepage = "https://github.com/bitdruid/forensic_concepts"
