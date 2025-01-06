@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import subprocess
 
@@ -104,6 +105,9 @@ def output():
     print(f"Output written to {log_file.name}\n")
 
 def main():
+    if os.geteuid() != 0:
+        print("\nThis tool must be run as root!\n")
+        sys.exit(1)
     collect_data()
     output()
 

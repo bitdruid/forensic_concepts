@@ -1,7 +1,12 @@
+import os
+import sys
 import subprocess
 
 def main():
-    bash_script = '''
+    if os.geteuid() != 0:
+        print("\nThis tool must be run as root!\n")
+        sys.exit(1)
+    bash_script = r'''
     echo "----- Workstation Status Collector -----"
     echo ""
     echo "--------------------"

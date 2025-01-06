@@ -8,6 +8,7 @@ import socket
 import argparse
 import hashlib
 import os
+import sys
 
 
 
@@ -88,6 +89,9 @@ def flush_stderr(process, log_file):
 
 
 def main():
+    if os.geteuid() != 0:
+        print("\nThis tool must be run as root!\n")
+        sys.exit(1)
     parser = argparse.ArgumentParser(description="Track bash shell activity.")
     parser.add_argument("-c", "--close", action="store_true", help="Close case - work finished.")
     args = parser.parse_args()
