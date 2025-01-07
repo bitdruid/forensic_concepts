@@ -1,9 +1,11 @@
 import os
 import sys
+import subprocess
 import platform
+
 import psutil
 import distro
-import subprocess
+from tabulate import tabulate
 
 def run_bash(command):
     try:
@@ -63,17 +65,10 @@ def collect_system_info():
     print("--------------------")
     print("Manually installed packages:")
     print("--------------------")
-    try:
-        manual_packages = subprocess.run(
-            "comm -23 <(apt-mark showmanual | sort -u) "
-            "<(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u) "
-            "| xargs -r dpkg-query -W -f='${Package}\\t${Version}\\n' | column",
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, shell=True, executable="/bin/bash"
-        ).stdout.strip()
-        print(manual_packages)
-    except Exception as e:
-        print(f"Error fetching manually installed packages: {str(e)}")
-
+    packages = run_bash("apt-mark showmanual | xargs -r dpkg-query -W -f='${Package}\\t${Version}\\n'").split("\n")
+    table = [line.split("\t") for line in packages]
+    print(tabulate(table, tablefmt="plain"))
+    
 def main():
     if os.geteuid() != 0:
         print("\nThis tool must be run as root!\n")
