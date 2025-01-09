@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: testcase_3
+    privileged: true
+    volumes:
+      - /dev:/dev:rw
