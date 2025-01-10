@@ -5,42 +5,51 @@ import argparse
 import parted
 from tabulate import tabulate
 
-def collect_devices(block_device=None):
+def output(block_device=None):
+    def collect_device_info(device):
+        table = []
+        disk = parted.Disk(device)
+        log_file.write(
+            f"Device:  {os.path.basename(device.path)}\n"
+            f"Model:   {device.model}\n"
+            f"Table:   {disk.type}\n"
+            f"Bytes:   {"{:,}".format(device.length * device.sectorSize)}\n"
+            f"Sectors: {"{:,}".format(device.length)} - Bytes: {device.sectorSize}\n"
+        )
+        log_file.write("\n")
+        
+        for partition in disk.partitions:
+            geometry = partition.geometry
+            fileSystem = partition.fileSystem
+
+            name = os.path.basename(partition.path)
+            description = partition.name
+            start = geometry.start
+            end = geometry.end
+            sectors = geometry.length
+            bytes = sectors * device.sectorSize
+            fs = fileSystem.type if fileSystem and fileSystem.type else None
+            flags = None
+
+            row = [name, "{:,}".format(start), "{:,}".format(end), "{:,}".format(sectors), "{:,}".format(bytes), fs, description, flags]
+            table.append(row)
+
+        headers = ["PART", "START", "END", "SECTORS", "BYTES", "FS", "DESCRIPTION", "FLAGS"]
+        log_file.write(tabulate(table, headers, tablefmt="github"))
+
     with open("blkinfo.log", "w") as log_file:
-        for device in parted.getAllDevices():
-
-            table = []
-
-            disk = parted.Disk(device)
-            log_file.write(
-                f"Device:  {os.path.basename(device.path)}\n"
-                f"Model:   {device.model}\n"
-                f"Table:   {disk.type}\n"
-                f"Bytes:   {"{:,}".format(device.length * device.sectorSize)}\n"
-                f"Sectors: {"{:,}".format(device.length)} - Bytes: {device.sectorSize}\n"
-            )
-            log_file.write("\n")
-            for partition in disk.partitions:
-                geometry = partition.geometry
-                fileSystem = partition.fileSystem
-
-                name = os.path.basename(partition.path)
-                description = partition.name
-                start = geometry.start
-                end = geometry.end
-                sectors = geometry.length
-                bytes = sectors * device.sectorSize
-                fs = fileSystem.type if fileSystem and fileSystem.type else None
-                flags = None
-
-                row = [name, "{:,}".format(start), "{:,}".format(end), "{:,}".format(sectors), "{:,}".format(bytes), fs, description, flags]
-                table.append(row)
-
-            headers=["PART","START","END","SECTORS","BYTES","FS","DESCRIPTION","FLAGS"]
-            log_file.write(tabulate(table, headers, tablefmt="github"))
+        if block_device:
+            try:
+                device = parted.getDevice(block_device)
+                collect_device_info(device)
+            except Exception as e:
+                log_file.write(f"Error: {e}\n")
+        else:
+            for device in parted.getAllDevices():
+                collect_device_info(device)
 
     with open("blkinfo.log", "r") as log_file:
-        print("\n" + log_file.read())
+        print("\n" + log_file.read() + "\n")
  
 
 def main():
@@ -62,9 +71,9 @@ def main():
         if not os.path.exists(args.block_device):
             print(f"\nError: The specified file or device '{args.block_device}' does not exist.\n")
             sys.exit(1)
-        collect_devices(args.block_device)
+        output(args.block_device)
     else:
-        collect_devices()
+        output()
 
 
 if __name__ == "__main__":
