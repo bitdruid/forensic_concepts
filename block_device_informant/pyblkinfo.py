@@ -5,18 +5,20 @@ import argparse
 import parted
 from tabulate import tabulate
 
+
 def output(block_device=None):
     def collect_device_info(device):
         table = []
         disk = parted.Disk(device)
-        log_file.write(
+        f.write("\n")
+        f.write(
             f"Device:  {os.path.basename(device.path)}\n"
             f"Model:   {device.model}\n"
             f"Table:   {disk.type}\n"
             f"Bytes:   {"{:,}".format(device.length * device.sectorSize)}\n"
             f"Sectors: {"{:,}".format(device.length)} - Bytes: {device.sectorSize}\n"
         )
-        log_file.write("\n")
+        f.write("\n")
         
         for partition in disk.partitions:
             geometry = partition.geometry
@@ -35,21 +37,23 @@ def output(block_device=None):
             table.append(row)
 
         headers = ["PART", "START", "END", "SECTORS", "BYTES", "FS", "DESCRIPTION", "FLAGS"]
-        log_file.write(tabulate(table, headers, tablefmt="github"))
+        f.write(tabulate(table, headers, tablefmt="github"))
+        f.write("\n")
 
-    with open("blkinfo.log", "w") as log_file:
+    log_file = os.path.expanduser("~/blkinfo.log")
+    with open(log_file, "w") as f:
         if block_device:
             try:
                 device = parted.getDevice(block_device)
                 collect_device_info(device)
             except Exception as e:
-                log_file.write(f"Error: {e}\n")
+                f.write(f"Error: {e}\n")
         else:
             for device in parted.getAllDevices():
                 collect_device_info(device)
 
-    with open("blkinfo.log", "r") as log_file:
-        print("\n" + log_file.read() + "\n")
+    with open(log_file, "r") as f:
+        print(f.read())
  
 
 def main():

@@ -46,7 +46,7 @@ def collect_system_info():
     cpu_threads = int(run_bash("lscpu | grep -E '^Thread\\(s\\) per core' | awk -F: '{print $2}' | xargs"))
     cpu_sockets = int(run_bash("lscpu | grep -E '^Socket\\(s\\)' | awk -F: '{print $2}' | xargs"))
     total_threads = cpu_cores * cpu_threads * cpu_sockets
-    
+
     gpu_info = run_bash("lspci | grep -i vga | awk -F: '{print $3}' | xargs")
     
     ram_kb = psutil.virtual_memory().total // 1024
@@ -68,7 +68,7 @@ def collect_system_info():
     packages = run_bash("apt-mark showmanual | xargs -r dpkg-query -W -f='${Package}\\t${Version}\\n'").split("\n")
     table = [line.split("\t") for line in packages]
     print(tabulate(table, tablefmt="plain"))
-    
+
 def main():
     if os.geteuid() != 0:
         print("\nThis tool must be run as root!\n")
