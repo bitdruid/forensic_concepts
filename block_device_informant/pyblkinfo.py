@@ -23,6 +23,7 @@ def output(block_device=None):
         for partition in disk.partitions:
             geometry = partition.geometry
             fileSystem = partition.fileSystem
+            print(partition.getFlagsAsString())
 
             name = os.path.basename(partition.path)
             description = partition.name
@@ -30,8 +31,10 @@ def output(block_device=None):
             end = geometry.end
             sectors = geometry.length
             bytes = sectors * device.sectorSize
+            # sectors = int(partition.getLength(unit="sectors"))
+            # bytes = int(partition.getLength(unit="B"))
             fs = fileSystem.type if fileSystem and fileSystem.type else None
-            flags = None
+            flags = partition.getFlagsAsString()
 
             row = [name, "{:,}".format(start), "{:,}".format(end), "{:,}".format(sectors), "{:,}".format(bytes), fs, description, flags]
             table.append(row)
