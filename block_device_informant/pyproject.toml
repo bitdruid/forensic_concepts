@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyblkinfo"
-version = "0.1.6"
+version = "0.1.7"
 description = "Conceptual block device information output."
 authors = [
     { name = "bitdruid", email = "bitdruid@outlook.com" }
