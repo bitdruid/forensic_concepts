@@ -9,9 +9,9 @@ This little project is just a conceptual work used for my thesis about documenta
 
 It's purpose is to output basic necessary infos about all attached block devices in a fast usable format. Forensic staff would be able to use this as a first step to document the system they are working on.
 
-However, this project is just a CONCEPT - it shows how one step of documentation COULD be done - or moreover, what kind of output would be useful - as a small part of the overall forensic process. One limitation is that the script does not directly interact with the block devices but rather gathers information through system commands. This means it relies on the accuracy and availability of these commands. Additionally, the script has not been extensively tested with all possible device configurations.
+However, this project is just a CONCEPT - it shows how one step of documentation COULD be done - or moreover, what kind of output would be useful - as a small part of the overall forensic process. One limitation is that the script does only accept block devices and not a specific partition. It accepts images as parameter (`blkinfo <path>`). Additionally, the script has not been extensively tested with all possible device configurations.
 
-It uses Linux `lsblk` command to gather information about block devices.
+It uses Linux python `pyparted` library to gather information about block devices.
 
 ## Installation
 
@@ -19,22 +19,24 @@ It uses Linux `lsblk` command to gather information about block devices.
 
 # Usage
 
-- Run with `blkinfo`
+- Run with `blkinfo <optional path>`
 - Output is written to stdout
 - Stores log in your home dir `blkinfo.log`
 
 # Example log
 
 ```
-Device:  sdb
-Model:   General UDisk
-Table:   dos
-Size:    61,865,984 bytes
-Sectors: 120,832 - Size: 512 bytes
-----------------------------------------------------------------------------
-Name | Label | Start Sector | End Sector | Sectors | Bytes      | FS        
----- | ----- | ------------ | ---------- | ------- | ---------- | ----------
-sdb1 |       | 2,048        | 34,815     | 32,768  | 16,777,216 | vfat FAT16
-sdb2 |       | 34,816       | 67,583     | 32,768  | 16,777,216 | vfat FAT16
-sdb3 |       | 67,584       | 120,831    | 53,248  | 27,262,976 | vfat FAT16
+Device:  nvme0n1
+Model:   Force MP510
+Table:   gpt
+Bytes:   240,057,409,536
+Sectors: 468,862,128 - Bytes: 512
+┌───────────┬─────────────┬─────────────┬─────────────┬─────────────────┬───────┬──────────────────────────────┬───────────────────────┐
+│ PART      │ START       │ END         │ SECTORS     │ BYTES           │ FS    │ DESCRIPTION                  │ FLAGS                 │
+├───────────┼─────────────┼─────────────┼─────────────┼─────────────────┼───────┼──────────────────────────────┼───────────────────────┤
+│ nvme0n1p1 │ 4,096       │ 618,495     │ 614,400     │ 314,572,800     │ fat32 │                              │ boot, esp             │
+│ nvme0n1p2 │ 618,496     │ 273,551,359 │ 272,932,864 │ 139,741,626,368 │ btrfs │ root                         │                       │
+│ nvme0n1p3 │ 273,551,360 │ 273,584,127 │ 32,768      │ 16,777,216      │       │ Microsoft reserved partition │ msftres, no_automount │
+│ nvme0n1p4 │ 273,584,128 │ 468,860,927 │ 195,276,800 │ 99,981,721,600  │ ntfs  │ Basic data partition         │ msftdata              │
+└───────────┴─────────────┴─────────────┴─────────────┴─────────────────┴───────┴──────────────────────────────┴───────────────────────┘
 ```
