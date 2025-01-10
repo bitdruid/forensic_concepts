@@ -10,20 +10,16 @@ def output(block_device=None):
     def collect_device_info(device):
         table = []
         disk = parted.Disk(device)
-        f.write("\n")
         f.write(
             f"Device:  {os.path.basename(device.path)}\n"
             f"Model:   {device.model}\n"
             f"Table:   {disk.type}\n"
             f"Bytes:   {"{:,}".format(device.length * device.sectorSize)}\n"
             f"Sectors: {"{:,}".format(device.length)} - Bytes: {device.sectorSize}\n"
-        )
-        f.write("\n")
-        
+        )        
         for partition in disk.partitions:
             geometry = partition.geometry
             fileSystem = partition.fileSystem
-            print(partition.getFlagsAsString())
 
             name = os.path.basename(partition.path)
             description = partition.name
@@ -40,7 +36,7 @@ def output(block_device=None):
             table.append(row)
 
         headers = ["PART", "START", "END", "SECTORS", "BYTES", "FS", "DESCRIPTION", "FLAGS"]
-        f.write(tabulate(table, headers, tablefmt="github"))
+        f.write(tabulate(table, headers, tablefmt="rounded_outline"))
         f.write("\n")
 
     log_file = os.path.expanduser("~/blkinfo.log")
