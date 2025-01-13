@@ -61,7 +61,7 @@ def main():
         print("\nThis tool must be run as root!\n")
         sys.exit(1)
 
-    parser = argparse.ArgumentParser(description="Track bash shell activity.")
+    parser = argparse.ArgumentParser(description="Get an overview of attached block-devices or image-files.")
     parser.add_argument(
         "block_device",
         nargs="?",
