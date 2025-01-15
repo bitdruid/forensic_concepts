@@ -90,6 +90,9 @@ def collect_system_info():
                 package_table.append([is_manual, pkg_name, pkg_version])
                 
         f.write(tabulate(package_table, tablefmt="plain"))
+    
+    with open(log_file, "r") as f:
+        print(f.read())
 
 
 def main():
