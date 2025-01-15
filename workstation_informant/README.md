@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-orange)](https://ubuntu.com/download/desktop)
 
-# blkinfo
+# wrkstinfo
 
 This little project is just a conceptual work used for my thesis about documentation of forensic processes.
 
