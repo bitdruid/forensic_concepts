@@ -51,9 +51,9 @@ def collect_system_info():
         ram_kb = psutil.virtual_memory().total // 1024
         formatted_ram_kb = f"{ram_kb:,}"
 
-        f.write(f"CPU:    {cpu_info}\n")
-        f.write(f"GPU:    {gpu_info}\n")
-        f.write(f"RAM:    {formatted_ram_kb} kB\n")
+        f.write(f"CPU: {cpu_info}\n")
+        f.write(f"GPU: {gpu_info}\n")
+        f.write(f"RAM: {formatted_ram_kb} kB\n")
         f.write(f"CPU active sockets:   {cpu_sockets}\n")
         f.write(f"CPU active cores:     {cpu_cores}\n")
         f.write(f"CPU threads per core: {cpu_threads}\n")
