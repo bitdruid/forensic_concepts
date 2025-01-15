@@ -11,7 +11,7 @@ It's purpose is to output basic necessary infos about the current workstation. F
 
 However, this project is just a CONCEPT - it shows how one step of documentation COULD be done - or moreover, what kind of output would be useful - as a small part of the overall forensic process.
 
-It uses Linux `uname`, `systemd-detect-virt`, `lsb_release`, `lscpu`, `lspci`, `free`, `apt-mark` command to gather information about block devices.
+It uses Linux `uname`, `systemd-detect-virt`, `lsb_release`, `lscpu`, `lspci`, `free`, `apt-mark`, `dpkg-query` command to gather information about block devices.
 
 ## Installation
 
@@ -21,8 +21,50 @@ It uses Linux `uname`, `systemd-detect-virt`, `lsb_release`, `lscpu`, `lspci`, `
 
 - Run with `wrkstinfo`
 - Output is written to stdout
+- Stores log in your home dir `wrkstinfo.log`
 
 # Example log
 
 ```
+----- Workstation Status Collector -----
+
+--------------------
+OS-Type:
+--------------------
+Linux
+
+--------------------
+OS-Release:
+--------------------
+Ubuntu 24.10
+
+--------------------
+OS-Kernel:
+--------------------
+6.13.0-rc2-1-MANJARO
+
+--------------------
+System-Information:
+--------------------
+CPU:    Intel(R) Core(TM) i3-7100U CPU @ 2.40GHz
+GPU:    
+RAM:    16,256,576 kB
+CPU active sockets:   1
+CPU active cores:     2
+CPU threads per core: 2
+CPU total threads:    4
+
+--------------------
+Packages manually from all:
+--------------------
+   adduser                    3.137ubuntu2
+X  apt                        2.9.8
+X  autoconf                   2.72-3
+   automake                   1:1.16.5-1.3ubuntu1
+   autotools-dev              20220109.1
+X  base-files                 13.3ubuntu6
+X  base-passwd                3.6.4
+X  bash                       5.2.32-1ubuntu1
+   binfmt-support             2.2.2-7
+   ...
 ```

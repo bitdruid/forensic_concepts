@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pywrkstinfo"
-version = "0.1.6"
+version = "0.1.8"
 description = "Conceptual workstation information output."
 authors = [
     { name = "bitdruid", email = "bitdruid@outlook.com" }
