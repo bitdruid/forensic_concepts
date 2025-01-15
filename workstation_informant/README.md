@@ -11,7 +11,7 @@ It's purpose is to output basic necessary infos about the current workstation. F
 
 However, this project is just a CONCEPT - it shows how one step of documentation COULD be done - or moreover, what kind of output would be useful - as a small part of the overall forensic process.
 
-It uses Linux `uname`, `systemd-detect-virt`, `lsb_release`, `lscpu`, `lspci`, `free`, `apt-mark`, `dpkg-query` command to gather information about block devices.
+It uses Linux `uname`, `systemd-detect-virt`, `lsb_release`, `lscpu`, `lspci`, `free`, `apt-mark`, `dpkg-query` command to gather information about the system.
 
 ## Installation
 
