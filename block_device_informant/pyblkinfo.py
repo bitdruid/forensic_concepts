@@ -36,7 +36,7 @@ def output(block_device=None):
             table.append(row)
 
         headers = ["PART", "START", "END", "SECTORS", "BYTES", "FS", "DESCRIPTION", "FLAGS"]
-        f.write(tabulate(table, headers, tablefmt="rounded_outline"))
+        f.write(tabulate(table, headers, tablefmt="simple_outline"))
         f.write("\n")
 
     log_file = os.path.expanduser("~/blkinfo.log")
