@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    container_name: testcase_3
+    container_name: testcase_2
     privileged: true
     volumes:
       - /dev:/dev:rw
