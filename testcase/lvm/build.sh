@@ -9,18 +9,19 @@ fi
 # Variables
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 MOUNT_DIR="$SCRIPT_DIR/mnt"
+IMAGE_SIZE=12M
 IMAGE1="disk1.img"
 IMAGE2="disk2.img"
 VG_NAME="evidence_vg"
 LV_NAME="evidence_lv"
-LV_SIZE="24M"
+LV_SIZE="16M"
 
 create() {
     echo "Creating LVM setup..."
 
     echo "Creating disk images..."
-    truncate -s 16M "$SCRIPT_DIR/$IMAGE1"
-    truncate -s 16M "$SCRIPT_DIR/$IMAGE2"
+    truncate -s "$IMAGE_SIZE" "$SCRIPT_DIR/$IMAGE1"
+    truncate -s "$IMAGE_SIZE" "$SCRIPT_DIR/$IMAGE2"
     sleep 1
 
     LOOP1=$(losetup --find --show "$SCRIPT_DIR/$IMAGE1")
@@ -87,12 +88,76 @@ remove() {
     echo "Cleanup completed."
 }
 
+fill() {
+    if ! mount | grep -q "$MOUNT_DIR"; then
+        echo "Error: Logical volume is not mounted. Please run the create command first."
+        exit 1
+    fi
+
+    echo "Filling logical volume with files..."
+
+    TOTAL_FILES=15
+    FILE_SIZE_MB=1
+
+    for ((i = 1; i <= TOTAL_FILES; i++)); do
+        FILE_NAME="$MOUNT_DIR/evidence_${i}-${TOTAL_FILES}.txt"
+        echo "Creating file $FILE_NAME of size ${FILE_SIZE_MB}MB..."
+        dd if=/dev/urandom of="$FILE_NAME" bs=1M count=$FILE_SIZE_MB
+    done
+
+    echo "All files created successfully in $MOUNT_DIR."
+}
+
+destroy() {
+    echo "Destroying LVM and detaching disk2..."
+
+    if mount | grep -q "$MOUNT_DIR"; then
+        echo "Unmounting logical volume..."
+        umount "$MOUNT_DIR"
+    fi
+
+    if lvdisplay "/dev/$VG_NAME/$LV_NAME" > /dev/null 2>&1; then
+        echo "Removing logical volume..."
+        lvremove -y "/dev/$VG_NAME/$LV_NAME"
+    fi
+
+    if vgdisplay "$VG_NAME" > /dev/null 2>&1; then
+        echo "Removing volume group..."
+        vgremove -y "$VG_NAME"
+    fi
+
+    LOOP1=$(losetup -j "$SCRIPT_DIR/$IMAGE1" | cut -d':' -f1)
+    LOOP2=$(losetup -j "$SCRIPT_DIR/$IMAGE2" | cut -d':' -f1)
+
+    if [ -n "$LOOP1" ]; then
+        echo "Detaching loop device $LOOP1..."
+        losetup -d "$LOOP1"
+    fi
+
+    if [ -n "$LOOP2" ]; then
+        echo "Removing physical volume on disk2..."
+        pvremove -y "$LOOP2"
+        echo "Detaching loop device $LOOP2..."
+        losetup -d "$LOOP2"
+        echo "Deleting disk2 image..."
+        rm -f "$SCRIPT_DIR/$IMAGE2"
+    fi
+
+    echo "Disk1 ($LOOP1) left."
+
+    echo "Destroy operation completed."
+}
+
 # Main
 if [ "$1" == "create" ]; then
     create
 elif [ "$1" == "remove" ]; then
     remove
+elif [ "$1" == "fill" ]; then
+    fill
+elif [ "$1" == "destroy" ]; then
+    destroy
 else
-    echo "Usage: $0 {create|remove}"
+    echo "Usage: $0 {create|remove|fill|destroy}"
     exit 1
 fi
