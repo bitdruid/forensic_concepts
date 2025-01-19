@@ -9,9 +9,10 @@ fi
 # Variables
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 MOUNT_DIR="$SCRIPT_DIR/mnt"
-IMAGE_SIZE=12M
-IMAGE1="disk1.img"
-IMAGE2="disk2.img"
+IMAGE0="disk1.img"
+IMAGE0_SIZE=8M
+IMAGE1="disk2.img"
+IMAGE1_SIZE=16M
 VG_NAME="evidence_vg"
 LV_NAME="evidence_lv"
 LV_SIZE="16M"
@@ -20,19 +21,20 @@ create() {
     echo "Creating LVM setup..."
 
     echo "Creating disk images..."
-    truncate -s "$IMAGE_SIZE" "$SCRIPT_DIR/$IMAGE1"
-    truncate -s "$IMAGE_SIZE" "$SCRIPT_DIR/$IMAGE2"
+    truncate -s "$IMAGE0_SIZE" "$SCRIPT_DIR/$IMAGE0"
+    truncate -s "$IMAGE1_SIZE" "$SCRIPT_DIR/$IMAGE1"
     sleep 1
 
+    LOOP0=$(losetup --find --show "$SCRIPT_DIR/$IMAGE0")
     LOOP1=$(losetup --find --show "$SCRIPT_DIR/$IMAGE1")
-    LOOP2=$(losetup --find --show "$SCRIPT_DIR/$IMAGE2")
-    echo "Created loop devices: $LOOP1, $LOOP2"
+    echo "Created loop devices: $LOOP0, $LOOP1"
 
     echo "Creating physical volumes..."
-    pvcreate "$LOOP1" "$LOOP2"
+    pvcreate --norestorefile -u mnYfLc-AdVG-z036-DU2L-e8d2-76GU-2vMuU3 "$LOOP0"
+    pvcreate --norestorefile -u PjypXK-UskX-30oP-SmM3-Jvtj-192v-aA1eHV "$LOOP1"
 
     echo "Creating volume group..."
-    vgcreate "$VG_NAME" "$LOOP1" "$LOOP2"
+    vgcreate "$VG_NAME" "$LOOP0" "$LOOP1"
 
     echo "Creating logical volume..."
     lvcreate -L "$LV_SIZE" -n "$LV_NAME" "$VG_NAME"
@@ -60,25 +62,25 @@ remove() {
         vgremove -y "$VG_NAME"
     fi
 
+    LOOP0=$(losetup -j "$SCRIPT_DIR/$IMAGE0" | cut -d':' -f1)
     LOOP1=$(losetup -j "$SCRIPT_DIR/$IMAGE1" | cut -d':' -f1)
-    LOOP2=$(losetup -j "$SCRIPT_DIR/$IMAGE2" | cut -d':' -f1)
 
-    if [ -n "$LOOP1" ] && [ -n "$LOOP2" ]; then
+    if [ -n "$LOOP0" ] && [ -n "$LOOP1" ]; then
         echo "Removing physical volumes..."
-        pvremove -y "$LOOP1" "$LOOP2"
+        pvremove -y "$LOOP0" "$LOOP1"
     fi
 
+    if [ -n "$LOOP0" ]; then
+        echo "Detaching loop device $LOOP0..."
+        losetup -d "$LOOP0"
+    fi
     if [ -n "$LOOP1" ]; then
         echo "Detaching loop device $LOOP1..."
         losetup -d "$LOOP1"
     fi
-    if [ -n "$LOOP2" ]; then
-        echo "Detaching loop device $LOOP2..."
-        losetup -d "$LOOP2"
-    fi
 
     echo "Deleting disk images..."
-    rm -f "$SCRIPT_DIR/$IMAGE1" "$SCRIPT_DIR/$IMAGE2"
+    rm -f "$SCRIPT_DIR/$IMAGE0" "$SCRIPT_DIR/$IMAGE1"
 
     if [ -d "$MOUNT_DIR" ]; then
         echo "Removing mount directory..."
@@ -96,17 +98,38 @@ fill() {
 
     echo "Filling logical volume with files..."
 
-    TOTAL_FILES=15
-    FILE_SIZE_MB=1
+    CYCLES=7  # iterations (1 text + 2 binary)
+    BINARY_FILE_SIZE=1  # binary file MB
+    TEXT_CONTENT="evidence"
 
-    for ((i = 1; i <= TOTAL_FILES; i++)); do
-        FILE_NAME="$MOUNT_DIR/evidence_${i}-${TOTAL_FILES}.txt"
-        echo "Creating file $FILE_NAME of size ${FILE_SIZE_MB}MB..."
-        dd if=/dev/urandom of="$FILE_NAME" bs=1M count=$FILE_SIZE_MB
+    TOTAL_EVIDENCE_FILES=$CYCLES
+
+    TEXT_FILE_INDEX=1  
+    BINARY_FILE_INDEX=1
+    for ((cycle = 1; cycle <= CYCLES; cycle++)); do
+        # text
+        TEXT_FILE_NAME="$MOUNT_DIR/evidence_${TEXT_FILE_INDEX}-${TOTAL_EVIDENCE_FILES}.txt"
+        TEXT_CONTENT="evidence${TEXT_FILE_INDEX}"
+        echo "Creating text file $TEXT_FILE_NAME with content 'evidence'..."
+        echo -n "$TEXT_CONTENT" > "$TEXT_FILE_NAME"
+        ((TEXT_FILE_INDEX++))
+
+        # binary1
+        BINARY_FILE_NAME_1="$MOUNT_DIR/file_${BINARY_FILE_INDEX}.dat"
+        echo "Creating binary file $BINARY_FILE_NAME_1 of size ${BINARY_FILE_SIZE}MB..."
+        dd if=/dev/urandom of="$BINARY_FILE_NAME_1" bs=1M count=$BINARY_FILE_SIZE status=none
+        ((BINARY_FILE_INDEX++))
+
+        # binary2
+        BINARY_FILE_NAME_2="$MOUNT_DIR/file_${BINARY_FILE_INDEX}.dat"
+        echo "Creating binary file $BINARY_FILE_NAME_2 of size ${BINARY_FILE_SIZE}MB..."
+        dd if=/dev/urandom of="$BINARY_FILE_NAME_2" bs=1M count=$BINARY_FILE_SIZE status=none
+        ((BINARY_FILE_INDEX++))
     done
 
     echo "All files created successfully in $MOUNT_DIR."
 }
+
 
 destroy() {
     echo "Destroying LVM and detaching disk2..."
@@ -126,24 +149,24 @@ destroy() {
         vgremove -y "$VG_NAME"
     fi
 
+    LOOP0=$(losetup -j "$SCRIPT_DIR/$IMAGE0" | cut -d':' -f1)
     LOOP1=$(losetup -j "$SCRIPT_DIR/$IMAGE1" | cut -d':' -f1)
-    LOOP2=$(losetup -j "$SCRIPT_DIR/$IMAGE2" | cut -d':' -f1)
+
+    if [ -n "$LOOP0" ]; then
+        echo "Detaching loop device $LOOP0..."
+        losetup -d "$LOOP0"
+    fi
 
     if [ -n "$LOOP1" ]; then
+        echo "Removing physical volume on disk2..."
+        pvremove -y "$LOOP1"
         echo "Detaching loop device $LOOP1..."
         losetup -d "$LOOP1"
-    fi
-
-    if [ -n "$LOOP2" ]; then
-        echo "Removing physical volume on disk2..."
-        pvremove -y "$LOOP2"
-        echo "Detaching loop device $LOOP2..."
-        losetup -d "$LOOP2"
         echo "Deleting disk2 image..."
-        rm -f "$SCRIPT_DIR/$IMAGE2"
+        rm -f "$SCRIPT_DIR/$IMAGE1"
     fi
 
-    echo "Disk1 ($LOOP1) left."
+    echo "Disk1 ($LOOP0) left."
 
     echo "Destroy operation completed."
 }
