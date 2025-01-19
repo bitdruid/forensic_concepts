@@ -6,7 +6,6 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-# Variables
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 MOUNT_DIR="$SCRIPT_DIR/mnt"
 IMAGE0="evidence1.img"
@@ -218,8 +217,10 @@ remove() {
     echo "Cleanup completed."
 }
 
+#####
+###### Main
+#####
 
-# Main
 if [ "$1" == "build" ]; then
     remove
     create
