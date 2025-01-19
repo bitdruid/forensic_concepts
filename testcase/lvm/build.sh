@@ -10,9 +10,11 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 MOUNT_DIR="$SCRIPT_DIR/mnt"
 IMAGE0="evidence1.img"
-IMAGE0_SIZE=16M
+IMAGE0_SIZE=10M
 IMAGE1="evidence2.img"
-IMAGE1_SIZE=8M
+IMAGE1_SIZE=6M
+IMAGE2="evidence3.img"
+IMAGE2_SIZE=6M
 VG_NAME="evidence_vg"
 LV_NAME="evidence_lv"
 LV_SIZE="16M"
@@ -26,18 +28,21 @@ create() {
     echo "Creating disk images..."
     truncate -s "$IMAGE0_SIZE" "$SCRIPT_DIR/$IMAGE0"
     truncate -s "$IMAGE1_SIZE" "$SCRIPT_DIR/$IMAGE1"
+    truncate -s "$IMAGE2_SIZE" "$SCRIPT_DIR/$IMAGE2"
     sleep 1
 
     LOOP0=$(losetup --find --show "$SCRIPT_DIR/$IMAGE0")
     LOOP1=$(losetup --find --show "$SCRIPT_DIR/$IMAGE1")
-    echo "Created loop devices: $LOOP0, $LOOP1"
+    LOOP2=$(losetup --find --show "$SCRIPT_DIR/$IMAGE2")
+    echo "Created loop devices: $LOOP0, $LOOP1", $LOOP2
 
     echo "Creating physical volumes..."
     pvcreate --norestorefile -u mnYfLc-AdVG-z036-DU2L-e8d2-76GU-2vMuU3 "$LOOP0"
     pvcreate --norestorefile -u PjypXK-UskX-30oP-SmM3-Jvtj-192v-aA1eHV "$LOOP1"
+    pvcreate --norestorefile -u We8Old-eAV6-lQUG-ycDX-G3m1-ljUB-ceWVAz "$LOOP2"
 
     echo "Creating volume group..."
-    vgcreate "$VG_NAME" "$LOOP0" "$LOOP1"
+    vgcreate "$VG_NAME" "$LOOP0" "$LOOP1" "$LOOP2"
 
     echo "Creating logical volume..."
     lvcreate -L "$LV_SIZE" -n "$LV_NAME" "$VG_NAME"
@@ -97,7 +102,7 @@ fill() {
 
 destroy() {
     echo "------------------------------"
-    echo "Destroying LVM and detaching disk2..."
+    echo "Destroying LVM and detaching disk1..."
     echo "------------------------------"
 
     if mount | grep -q "$MOUNT_DIR"; then
@@ -117,6 +122,7 @@ destroy() {
 
     LOOP0=$(losetup -j "$SCRIPT_DIR/$IMAGE0" | cut -d':' -f1)
     LOOP1=$(losetup -j "$SCRIPT_DIR/$IMAGE1" | cut -d':' -f1)
+    LOOP2=$(losetup -j "$SCRIPT_DIR/$IMAGE2" | cut -d':' -f1)
 
     if [ -n "$LOOP0" ]; then
         echo "Detaching loop device $LOOP0..."
@@ -124,15 +130,24 @@ destroy() {
     fi
 
     if [ -n "$LOOP1" ]; then
-        echo "Removing physical volume on disk2..."
+        echo "Removing physical volume on disk1..."
         pvremove -y "$LOOP1"
         echo "Detaching loop device $LOOP1..."
         losetup -d "$LOOP1"
-        echo "Deleting disk2 image..."
+        echo "Deleting disk1 image..."
         rm -f "$SCRIPT_DIR/$IMAGE1"
     fi
 
-    echo "Disk1 ($LOOP0) left."
+    if [ -n "$LOOP2" ]; then
+        echo "Removing physical volume on disk2..."
+        pvremove -y "$LOOP2"
+        echo "Detaching loop device $LOOP2..."
+        losetup -d "$LOOP2"
+        echo "Deleting disk2 image..."
+        rm -f "$SCRIPT_DIR/$IMAGE2"
+    fi
+
+    echo "Disk0 ($LOOP0) left."
 
     echo "Destroy operation completed."
 }
@@ -157,6 +172,7 @@ remove() {
 
     LOOP0=$(losetup -j "$SCRIPT_DIR/$IMAGE0" | cut -d':' -f1)
     LOOP1=$(losetup -j "$SCRIPT_DIR/$IMAGE1" | cut -d':' -f1)
+    LOOP2=$(losetup -j "$SCRIPT_DIR/$IMAGE2" | cut -d':' -f1)
 
     if [ -n "$LOOP0" ] && [ -n "$LOOP1" ]; then
         echo "Removing physical volumes..."
@@ -167,22 +183,32 @@ remove() {
         echo "Detaching loop device $LOOP0..."
         losetup -d "$LOOP0"
     fi
+
     if [ -n "$LOOP1" ]; then
         echo "Detaching loop device $LOOP1..."
         losetup -d "$LOOP1"
     fi
 
+    if [ -n "$LOOP2" ]; then
+        echo "Detaching loop device $LOOP2..."
+        losetup -d "$LOOP2"
+    fi
+
     echo "Deleting disk images..."
-    rm -f "$SCRIPT_DIR/$IMAGE0" "$SCRIPT_DIR/$IMAGE1"
+    rm -f "$SCRIPT_DIR/$IMAGE0" "$SCRIPT_DIR/$IMAGE1" "$SCRIPT_DIR/$IMAGE2"
 
     if [ -d "$MOUNT_DIR" ]; then
         echo "Removing mount directory..."
         rmdir "$MOUNT_DIR"
     fi
 
-    if [ -n "$SCRIPT_DIR/spare.img" ]; then
-        echo "Removing spare.img..."
-        rm -f "$SCRIPT_DIR/spare.img"
+    if [ -n "$SCRIPT_DIR/spare1.img" ]; then
+        echo "Removing spare1.img..."
+        rm -f "$SCRIPT_DIR/spare1.img"
+    fi
+        if [ -n "$SCRIPT_DIR/spare2.img" ]; then
+        echo "Removing spare2.img..."
+        rm -f "$SCRIPT_DIR/spare2.img"
     fi
     if [ -n "$SCRIPT_DIR/pv.head" ]; then
         echo "Removing pv.head..."
