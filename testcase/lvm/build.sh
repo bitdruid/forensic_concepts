@@ -17,8 +17,11 @@ VG_NAME="evidence_vg"
 LV_NAME="evidence_lv"
 LV_SIZE="16M"
 
+
 create() {
+    echo "------------------------------"
     echo "Creating LVM setup..."
+    echo "------------------------------"
 
     echo "Creating disk images..."
     truncate -s "$IMAGE0_SIZE" "$SCRIPT_DIR/$IMAGE0"
@@ -49,8 +52,96 @@ create() {
     echo "LVM successfully created and mounted at $MOUNT_DIR"
 }
 
+
+fill() {
+    if ! mount | grep -q "$MOUNT_DIR"; then
+        echo "Error: Logical volume is not mounted. Please run the create command first."
+        exit 1
+    fi
+    echo "------------------------------"
+    echo "Filling logical volume with files..."
+    echo "------------------------------"
+
+    CYCLES=7  # iterations (1 text + 2 binary)
+    BINARY_FILE_SIZE=1  # binary file MB
+    TEXT_CONTENT="evidence"
+
+    TOTAL_EVIDENCE_FILES=$CYCLES
+
+    TEXT_FILE_INDEX=1  
+    BINARY_FILE_INDEX=1
+    for ((cycle = 1; cycle <= CYCLES; cycle++)); do
+        # text
+        TEXT_FILE_NAME="$MOUNT_DIR/evidence_${TEXT_FILE_INDEX}-${TOTAL_EVIDENCE_FILES}.txt"
+        TEXT_CONTENT="evidence${TEXT_FILE_INDEX}"
+        echo "Creating text file $TEXT_FILE_NAME with content 'evidence'..."
+        echo -n "$TEXT_CONTENT" > "$TEXT_FILE_NAME"
+        ((TEXT_FILE_INDEX++))
+
+        # binary1
+        BINARY_FILE_NAME_1="$MOUNT_DIR/file_${BINARY_FILE_INDEX}.dat"
+        echo "Creating binary file $BINARY_FILE_NAME_1 of size ${BINARY_FILE_SIZE}MB..."
+        dd if=/dev/urandom of="$BINARY_FILE_NAME_1" bs=1M count=$BINARY_FILE_SIZE status=none
+        ((BINARY_FILE_INDEX++))
+
+        # binary2
+        BINARY_FILE_NAME_2="$MOUNT_DIR/file_${BINARY_FILE_INDEX}.dat"
+        echo "Creating binary file $BINARY_FILE_NAME_2 of size ${BINARY_FILE_SIZE}MB..."
+        dd if=/dev/urandom of="$BINARY_FILE_NAME_2" bs=1M count=$BINARY_FILE_SIZE status=none
+        ((BINARY_FILE_INDEX++))
+    done
+
+    echo "All files created successfully in $MOUNT_DIR."
+}
+
+
+destroy() {
+    echo "------------------------------"
+    echo "Destroying LVM and detaching disk2..."
+    echo "------------------------------"
+
+    if mount | grep -q "$MOUNT_DIR"; then
+        echo "Unmounting logical volume..."
+        umount "$MOUNT_DIR"
+    fi
+
+    if lvdisplay "/dev/$VG_NAME/$LV_NAME" > /dev/null 2>&1; then
+        echo "Removing logical volume..."
+        lvremove -y "/dev/$VG_NAME/$LV_NAME"
+    fi
+
+    if vgdisplay "$VG_NAME" > /dev/null 2>&1; then
+        echo "Removing volume group..."
+        vgremove -y "$VG_NAME"
+    fi
+
+    LOOP0=$(losetup -j "$SCRIPT_DIR/$IMAGE0" | cut -d':' -f1)
+    LOOP1=$(losetup -j "$SCRIPT_DIR/$IMAGE1" | cut -d':' -f1)
+
+    if [ -n "$LOOP0" ]; then
+        echo "Detaching loop device $LOOP0..."
+        losetup -d "$LOOP0"
+    fi
+
+    if [ -n "$LOOP1" ]; then
+        echo "Removing physical volume on disk2..."
+        pvremove -y "$LOOP1"
+        echo "Detaching loop device $LOOP1..."
+        losetup -d "$LOOP1"
+        echo "Deleting disk2 image..."
+        rm -f "$SCRIPT_DIR/$IMAGE1"
+    fi
+
+    echo "Disk1 ($LOOP0) left."
+
+    echo "Destroy operation completed."
+}
+
+
 remove() {
+    echo "------------------------------"
     echo "Cleaning up LVM setup..."
+    echo "------------------------------"
 
     if mount | grep -q "$MOUNT_DIR"; then
         echo "Unmounting logical volume..."
@@ -90,86 +181,6 @@ remove() {
     echo "Cleanup completed."
 }
 
-fill() {
-    if ! mount | grep -q "$MOUNT_DIR"; then
-        echo "Error: Logical volume is not mounted. Please run the create command first."
-        exit 1
-    fi
-
-    echo "Filling logical volume with files..."
-
-    CYCLES=7  # iterations (1 text + 2 binary)
-    BINARY_FILE_SIZE=1  # binary file MB
-    TEXT_CONTENT="evidence"
-
-    TOTAL_EVIDENCE_FILES=$CYCLES
-
-    TEXT_FILE_INDEX=1  
-    BINARY_FILE_INDEX=1
-    for ((cycle = 1; cycle <= CYCLES; cycle++)); do
-        # text
-        TEXT_FILE_NAME="$MOUNT_DIR/evidence_${TEXT_FILE_INDEX}-${TOTAL_EVIDENCE_FILES}.txt"
-        TEXT_CONTENT="evidence${TEXT_FILE_INDEX}"
-        echo "Creating text file $TEXT_FILE_NAME with content 'evidence'..."
-        echo -n "$TEXT_CONTENT" > "$TEXT_FILE_NAME"
-        ((TEXT_FILE_INDEX++))
-
-        # binary1
-        BINARY_FILE_NAME_1="$MOUNT_DIR/file_${BINARY_FILE_INDEX}.dat"
-        echo "Creating binary file $BINARY_FILE_NAME_1 of size ${BINARY_FILE_SIZE}MB..."
-        dd if=/dev/urandom of="$BINARY_FILE_NAME_1" bs=1M count=$BINARY_FILE_SIZE status=none
-        ((BINARY_FILE_INDEX++))
-
-        # binary2
-        BINARY_FILE_NAME_2="$MOUNT_DIR/file_${BINARY_FILE_INDEX}.dat"
-        echo "Creating binary file $BINARY_FILE_NAME_2 of size ${BINARY_FILE_SIZE}MB..."
-        dd if=/dev/urandom of="$BINARY_FILE_NAME_2" bs=1M count=$BINARY_FILE_SIZE status=none
-        ((BINARY_FILE_INDEX++))
-    done
-
-    echo "All files created successfully in $MOUNT_DIR."
-}
-
-
-destroy() {
-    echo "Destroying LVM and detaching disk2..."
-
-    if mount | grep -q "$MOUNT_DIR"; then
-        echo "Unmounting logical volume..."
-        umount "$MOUNT_DIR"
-    fi
-
-    if lvdisplay "/dev/$VG_NAME/$LV_NAME" > /dev/null 2>&1; then
-        echo "Removing logical volume..."
-        lvremove -y "/dev/$VG_NAME/$LV_NAME"
-    fi
-
-    if vgdisplay "$VG_NAME" > /dev/null 2>&1; then
-        echo "Removing volume group..."
-        vgremove -y "$VG_NAME"
-    fi
-
-    LOOP0=$(losetup -j "$SCRIPT_DIR/$IMAGE0" | cut -d':' -f1)
-    LOOP1=$(losetup -j "$SCRIPT_DIR/$IMAGE1" | cut -d':' -f1)
-
-    if [ -n "$LOOP0" ]; then
-        echo "Detaching loop device $LOOP0..."
-        losetup -d "$LOOP0"
-    fi
-
-    if [ -n "$LOOP1" ]; then
-        echo "Removing physical volume on disk2..."
-        pvremove -y "$LOOP1"
-        echo "Detaching loop device $LOOP1..."
-        losetup -d "$LOOP1"
-        echo "Deleting disk2 image..."
-        rm -f "$SCRIPT_DIR/$IMAGE1"
-    fi
-
-    echo "Disk1 ($LOOP0) left."
-
-    echo "Destroy operation completed."
-}
 
 # Main
 if [ "$1" == "create" ]; then
