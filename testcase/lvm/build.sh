@@ -102,7 +102,7 @@ fill() {
 
 destroy() {
     echo "------------------------------"
-    echo "Destroying LVM and detaching disk1..."
+    echo "Destroying LVM while keeping disk0..."
     echo "------------------------------"
 
     if mount | grep -q "$MOUNT_DIR"; then
