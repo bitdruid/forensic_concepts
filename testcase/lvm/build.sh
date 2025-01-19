@@ -9,10 +9,10 @@ fi
 # Variables
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 MOUNT_DIR="$SCRIPT_DIR/mnt"
-IMAGE0="disk1.img"
-IMAGE0_SIZE=8M
-IMAGE1="disk2.img"
-IMAGE1_SIZE=16M
+IMAGE0="evidence1.img"
+IMAGE0_SIZE=16M
+IMAGE1="evidence2.img"
+IMAGE1_SIZE=8M
 VG_NAME="evidence_vg"
 LV_NAME="evidence_lv"
 LV_SIZE="16M"
@@ -63,7 +63,7 @@ fill() {
     echo "------------------------------"
 
     CYCLES=7  # iterations (1 text + 2 binary)
-    BINARY_FILE_SIZE=1  # binary file MB
+    BINARY_FILE_SIZE=1  # binary file MiB
     TEXT_CONTENT="evidence"
 
     TOTAL_EVIDENCE_FILES=$CYCLES
@@ -143,6 +143,8 @@ remove() {
     echo "Cleaning up LVM setup..."
     echo "------------------------------"
 
+    losetup -D
+
     if mount | grep -q "$MOUNT_DIR"; then
         echo "Unmounting logical volume..."
         umount "$MOUNT_DIR"
@@ -178,12 +180,26 @@ remove() {
         rmdir "$MOUNT_DIR"
     fi
 
+    if [ -n "$SCRIPT_DIR/spare.img" ]; then
+        echo "Removing spare.img..."
+        rm -f "$SCRIPT_DIR/spare.img"
+    fi
+    if [ -n "$SCRIPT_DIR/pv.head" ]; then
+        echo "Removing pv.head..."
+        rm -f "$SCRIPT_DIR/pv.head"
+    fi
+
     echo "Cleanup completed."
 }
 
 
 # Main
-if [ "$1" == "create" ]; then
+if [ "$1" == "build" ]; then
+    remove
+    create
+    fill
+    destroy
+elif [ "$1" == "create" ]; then
     create
 elif [ "$1" == "remove" ]; then
     remove
@@ -192,6 +208,6 @@ elif [ "$1" == "fill" ]; then
 elif [ "$1" == "destroy" ]; then
     destroy
 else
-    echo "Usage: $0 {create|remove|fill|destroy}"
+    echo "Usage: $0 {build|create|remove|fill|destroy}"
     exit 1
 fi
