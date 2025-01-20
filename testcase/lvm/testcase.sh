@@ -7,9 +7,9 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 MOUNT_DIR="$PWD/mnt"
-IMAGE0="evidence1.img"
+IMAGE0="evidence0.img"
 IMAGE0_SIZE=16M
-IMAGE1="evidence2.img"
+IMAGE1="evidence1.img"
 IMAGE1_SIZE=8M
 VG_NAME="evidence_vg"
 LV_NAME="evidence_lv"
