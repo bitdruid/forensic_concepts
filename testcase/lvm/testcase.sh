@@ -6,8 +6,7 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-MOUNT_DIR="$SCRIPT_DIR/mnt"
+MOUNT_DIR="$PWD/mnt"
 IMAGE0="evidence1.img"
 IMAGE0_SIZE=16M
 IMAGE1="evidence2.img"
@@ -23,12 +22,12 @@ create() {
     echo "------------------------------"
 
     echo "Creating disk images..."
-    truncate -s "$IMAGE0_SIZE" "$SCRIPT_DIR/$IMAGE0"
-    truncate -s "$IMAGE1_SIZE" "$SCRIPT_DIR/$IMAGE1"
+    truncate -s "$IMAGE0_SIZE" "$PWD/$IMAGE0"
+    truncate -s "$IMAGE1_SIZE" "$PWD/$IMAGE1"
     sleep 1
 
-    LOOP0=$(losetup --find --show "$SCRIPT_DIR/$IMAGE0")
-    LOOP1=$(losetup --find --show "$SCRIPT_DIR/$IMAGE1")
+    LOOP0=$(losetup --find --show "$PWD/$IMAGE0")
+    LOOP1=$(losetup --find --show "$PWD/$IMAGE1")
     echo "Created loop devices: $LOOP0, $LOOP1"
 
     echo "Creating physical volumes..."
@@ -85,7 +84,7 @@ fill() {
         # text
         TEXT_FILE_NAME="$MOUNT_DIR/evidence_${TEXT_FILE_INDEX}-${TOTAL_EVIDENCE_FILES}.txt"
         TEXT_CONTENT="evidence${TEXT_FILE_INDEX}"
-        echo "Creating text file $TEXT_FILE_NAME with content 'evidence'..."
+        echo "Creating text file $TEXT_FILE_NAME with content 'evidence${TEXT_FILE_INDEX}'..."
         echo -n "$TEXT_CONTENT" > "$TEXT_FILE_NAME"
         ((TEXT_FILE_INDEX++))
     done
@@ -114,8 +113,8 @@ destroy() {
         vgremove -y "$VG_NAME"
     fi
 
-    LOOP0=$(losetup -j "$SCRIPT_DIR/$IMAGE0" | cut -d':' -f1)
-    LOOP1=$(losetup -j "$SCRIPT_DIR/$IMAGE1" | cut -d':' -f1)
+    LOOP0=$(losetup -j "$PWD/$IMAGE0" | cut -d':' -f1)
+    LOOP1=$(losetup -j "$PWD/$IMAGE1" | cut -d':' -f1)
 
     if [ -n "$LOOP0" ]; then
         echo "Detaching loop device $LOOP0..."
@@ -128,7 +127,7 @@ destroy() {
         echo "Detaching loop device $LOOP1..."
         losetup -d "$LOOP1"
         echo "Deleting disk1 image..."
-        rm -f "$SCRIPT_DIR/$IMAGE1"
+        rm -f "$PWD/$IMAGE1"
     fi
 
     echo "Disk0 ($LOOP0) left."
@@ -154,8 +153,8 @@ remove() {
         vgremove -y "$VG_NAME"
     fi
 
-    LOOP0=$(losetup -j "$SCRIPT_DIR/$IMAGE0" | cut -d':' -f1)
-    LOOP1=$(losetup -j "$SCRIPT_DIR/$IMAGE1" | cut -d':' -f1)
+    LOOP0=$(losetup -j "$PWD/$IMAGE0" | cut -d':' -f1)
+    LOOP1=$(losetup -j "$PWD/$IMAGE1" | cut -d':' -f1)
 
     if [ -n "$LOOP0" ]; then
         echo "Removing physical volume from $LOOP0..."
@@ -172,20 +171,20 @@ remove() {
     fi
 
     echo "Deleting disk images..."
-    rm -f "$SCRIPT_DIR/$IMAGE0" "$SCRIPT_DIR/$IMAGE1"
+    rm -f "$PWD/$IMAGE0" "$PWD/$IMAGE1"
 
     if [ -d "$MOUNT_DIR" ]; then
         echo "Removing mount directory..."
         rmdir "$MOUNT_DIR"
     fi
 
-    if [ -n "$SCRIPT_DIR/spare.img" ]; then
+    if [ -n "$PWD/spare.img" ]; then
         echo "Removing spare.img..."
-        rm -f "$SCRIPT_DIR/spare.img"
+        rm -f "$PWD/spare.img"
     fi
-    if [ -n "$SCRIPT_DIR/pv.head" ]; then
+    if [ -n "$PWD/pv.head" ]; then
         echo "Removing pv.head..."
-        rm -f "$SCRIPT_DIR/pv.head"
+        rm -f "$PWD/pv.head"
     fi
 
     echo "Cleanup completed."
