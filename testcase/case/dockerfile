@@ -8,9 +8,12 @@ FROM ubuntu:24.10
 #     && pip3 install --break-system-packages pywrkstinfo
 
 # placeholder
-RUN apt update && apt install -y qemu-utils libguestfs-tools --fix-missing \
+RUN apt update && apt install -y sudo \
     && apt-get autoremove -y \
     && apt-get clean -y
+
+COPY testcase.sh /usr/local/bin/testcase
+RUN chmod +x /usr/local/bin/testcase
 
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
