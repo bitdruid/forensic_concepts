@@ -1,6 +1,6 @@
 #!bin/bash
 
-IMAGE0="evidence0.img"
+IMAGE0="evidence.img"
 IMAGE0_SIZE=16M
 MOUNT_DIR="$PWD/mnt"
 
@@ -16,6 +16,22 @@ create() {
     echo "Created loop device: $LOOP0"
 
     echo "Formatting with FAT16..."
+    # see @ https://superuser.com/questions/332252/how-to-create-and-format-a-partition-using-a-bash-script
+fdisk "$LOOP0" <<EOF
+o
+n
+p
+1
+
+
+w
+EOF
+
+    echo "Reloading partition table..."
+    partprobe "$LOOP0"
+    LOOP0="${LOOP0}p1"
+
+    echo "Formatting partition with FAT16..."
     mkfs.vfat -F 16 "$LOOP0"
 
     mkdir -p "$MOUNT_DIR"
@@ -35,34 +51,36 @@ fill() {
     echo "Filling disk with files..."
     echo "------------------------------"
 
-    CYCLES=1  # iterations (1 text + 2 binary)
-    BINARY_FILE_SIZE=1  # binary file MiB
-    TEXT_CONTENT="evidence"
+    echo "evidence" > "$MOUNT_DIR/evidence.txt"
 
-    TOTAL_EVIDENCE_FILES=$CYCLES
+    # CYCLES=1  # iterations (1 text + 2 binary)
+    # BINARY_FILE_SIZE=1  # binary file MiB
+    # TEXT_CONTENT="evidence"
 
-    TEXT_FILE_INDEX=1  
-    BINARY_FILE_INDEX=1
-    for ((cycle = 1; cycle <= CYCLES; cycle++)); do
-        # binary1
-        BINARY_FILE_NAME_1="$MOUNT_DIR/file_${BINARY_FILE_INDEX}.dat"
-        echo "Creating binary file $BINARY_FILE_NAME_1 of size ${BINARY_FILE_SIZE}MB..."
-        dd if=/dev/urandom of="$BINARY_FILE_NAME_1" bs=1M count=$BINARY_FILE_SIZE status=none
-        ((BINARY_FILE_INDEX++))
+    # TOTAL_EVIDENCE_FILES=$CYCLES
 
-        # binary2
-        BINARY_FILE_NAME_2="$MOUNT_DIR/file_${BINARY_FILE_INDEX}.dat"
-        echo "Creating binary file $BINARY_FILE_NAME_2 of size ${BINARY_FILE_SIZE}MB..."
-        dd if=/dev/urandom of="$BINARY_FILE_NAME_2" bs=1M count=$BINARY_FILE_SIZE status=none
-        ((BINARY_FILE_INDEX++))
+    # TEXT_FILE_INDEX=1  
+    # BINARY_FILE_INDEX=1
+    # for ((cycle = 1; cycle <= CYCLES; cycle++)); do
+    #     # binary1
+    #     BINARY_FILE_NAME_1="$MOUNT_DIR/file_${BINARY_FILE_INDEX}.dat"
+    #     echo "Creating binary file $BINARY_FILE_NAME_1 of size ${BINARY_FILE_SIZE}MB..."
+    #     dd if=/dev/urandom of="$BINARY_FILE_NAME_1" bs=1M count=$BINARY_FILE_SIZE status=none
+    #     ((BINARY_FILE_INDEX++))
 
-        # text
-        TEXT_FILE_NAME="$MOUNT_DIR/evidence_${TEXT_FILE_INDEX}-${TOTAL_EVIDENCE_FILES}.txt"
-        TEXT_CONTENT="evidence${TEXT_FILE_INDEX}"
-        echo "Creating text file $TEXT_FILE_NAME with content 'evidence${TEXT_FILE_INDEX}'..."
-        echo -n "$TEXT_CONTENT" > "$TEXT_FILE_NAME"
-        ((TEXT_FILE_INDEX++))
-    done
+    #     # binary2
+    #     BINARY_FILE_NAME_2="$MOUNT_DIR/file_${BINARY_FILE_INDEX}.dat"
+    #     echo "Creating binary file $BINARY_FILE_NAME_2 of size ${BINARY_FILE_SIZE}MB..."
+    #     dd if=/dev/urandom of="$BINARY_FILE_NAME_2" bs=1M count=$BINARY_FILE_SIZE status=none
+    #     ((BINARY_FILE_INDEX++))
+
+    #     # text
+    #     TEXT_FILE_NAME="$MOUNT_DIR/evidence_${TEXT_FILE_INDEX}-${TOTAL_EVIDENCE_FILES}.txt"
+    #     TEXT_CONTENT="evidence${TEXT_FILE_INDEX}"
+    #     echo "Creating text file $TEXT_FILE_NAME with content 'evidence${TEXT_FILE_INDEX}'..."
+    #     echo -n "$TEXT_CONTENT" > "$TEXT_FILE_NAME"
+    #     ((TEXT_FILE_INDEX++))
+    # done
 
     echo "All files created successfully in $MOUNT_DIR."
 }
@@ -78,6 +96,8 @@ destroy() {
         umount "$MOUNT_DIR"
     fi
 
+    LOOP0=$(losetup -j "$PWD/$IMAGE0" | cut -d':' -f1)
+
     echo "Rewriting Start-LBA with wrong value..."
     # overwrites 0x1c5-0x1c8 (Start-LBA) with 0xdeadbeef
     echo -n -e '\xde\xad\xbe\xef' | dd of="$LOOP0" bs=1 seek=454 conv=notrunc
@@ -92,6 +112,21 @@ remove() {
     echo "------------------------------"
     echo "Cleaning up ... setup..."
     echo "------------------------------"
+
+    if mount | grep -q "$MOUNT_DIR"; then
+        echo "Unmounting disk..."
+        umount "$MOUNT_DIR"
+    fi
+
+    LOOP0=$(losetup -j "$PWD/$IMAGE0" | cut -d':' -f1)
+
+    echo "Removing loop device..."
+    losetup -d "$LOOP0"
+
+    echo "Removing disk image..."
+    rm -f "$PWD/$IMAGE0"
+
+    echo "Cleanup complete."
 }
 
 

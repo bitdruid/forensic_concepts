@@ -9,7 +9,7 @@ RUN apt update \
     && apt-get autoremove -y \
     && apt-get clean -y
 
-# see @https://serverfault.com/questions/802766/calling-lvcreate-from-inside-the-container-hangs
+# see @ https://serverfault.com/questions/802766/calling-lvcreate-from-inside-the-container-hangs
 RUN echo '\nactivation {\n    udev_sync = 0\n    udev_rules = 0\n}' >> /etc/lvm/lvm.conf
     
 COPY testcase.sh /usr/local/bin/testcase
