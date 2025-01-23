@@ -47,7 +47,7 @@ create() {
     echo "Mounting logical volume..."
     mount "/dev/$VG_NAME/$LV_NAME" "$MOUNT_DIR"
 
-    echo "LVM successfully created and mounted at $MOUNT_DIR"
+    echo "LVM created and mounted at $MOUNT_DIR"
 }
 
 
