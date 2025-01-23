@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 
 echo "<<<<< Container initialized and running >>>>>"
 

@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 
 IMAGE0="evidence.img"
 IMAGE0_SIZE=16M
@@ -6,7 +6,7 @@ MOUNT_DIR="$PWD/mnt"
 
 create() {
     echo "------------------------------"
-    echo "Creating ... setup..."
+    echo "Creating disk setup..."
     echo "------------------------------"
 
     echo "Creating disk image..."
@@ -69,7 +69,7 @@ destroy() {
 
 remove() {
     echo "------------------------------"
-    echo "Cleaning up ... setup..."
+    echo "Cleaning up disk setup..."
     echo "------------------------------"
 
     if mount | grep -q "$MOUNT_DIR"; then
@@ -79,11 +79,20 @@ remove() {
 
     LOOP0=$(losetup -j "$PWD/$IMAGE0" | cut -d':' -f1)
 
-    echo "Removing loop device..."
-    losetup -d "$LOOP0"
+    if [ -n "$LOOP0" ]; then
+        echo "Detaching loop device $LOOP0..."
+        losetup -d "$LOOP0"
+    fi
 
-    echo "Removing disk image..."
-    rm -f "$PWD/$IMAGE0"
+    if [ -f "$PWD/$IMAGE0" ]; then
+        echo "Removing disk image..."
+        rm -f "$PWD/$IMAGE0"
+    fi
+
+    if [ -d "$MOUNT_DIR" ]; then
+        echo "Removing mount directory..."
+        rmdir "$MOUNT_DIR"
+    fi
 
     echo "DONE"
 }

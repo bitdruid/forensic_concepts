@@ -178,6 +178,7 @@ remove() {
         echo "Removing spare.img..."
         rm -f "$PWD/spare.img"
     fi
+    
     if [ -n "$PWD/pv.head" ]; then
         echo "Removing pv.head..."
         rm -f "$PWD/pv.head"
