@@ -44,18 +44,14 @@ create() {
     mkfs.vfat -F 16 "/dev/$VG_NAME/$LV_NAME"
 
     mkdir -p "$MOUNT_DIR"
-    echo "Mounting logical volume..."
+    echo "Mounting logical volume to $MOUNT_DIR..."
     mount "/dev/$VG_NAME/$LV_NAME" "$MOUNT_DIR"
 
-    echo "LVM created and mounted at $MOUNT_DIR"
+    echo "DONE"
 }
 
 
 fill() {
-    if ! mount | grep -q "$MOUNT_DIR"; then
-        echo "Error: Logical volume is not mounted. Please run the create command first."
-        exit 1
-    fi
     echo "------------------------------"
     echo "Filling logical volume with files..."
     echo "------------------------------"
@@ -89,7 +85,7 @@ fill() {
         ((TEXT_FILE_INDEX++))
     done
 
-    echo "All files created successfully in $MOUNT_DIR."
+    echo "DONE"
 }
 
 
@@ -132,7 +128,7 @@ destroy() {
 
     echo "Disk0 ($LOOP0) left."
 
-    echo "Destroy operation completed."
+    echo "DONE"
 }
 
 
@@ -187,7 +183,7 @@ remove() {
         rm -f "$PWD/pv.head"
     fi
 
-    echo "Cleanup completed."
+    echo "DONE"
 }
 
 #####
