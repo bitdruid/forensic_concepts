@@ -16,7 +16,7 @@ create() {
     echo "Created loop device: $LOOP0"
 
     echo "Creating msdos partition table..."
-    echo 'type=83' | sfdisk "$LOOP0" > /dev/null 2>&1 # surpress "Re-reading the partition table failed..."
+    echo 'type=06' | sfdisk "$LOOP0" > /dev/null 2>&1 # surpress "Re-reading the partition table failed..."
 
     echo "Reloading partition table..."
     partprobe "$LOOP0"
@@ -56,12 +56,18 @@ destroy() {
 
     LOOP0=$(losetup -j "$PWD/$IMAGE0" | cut -d':' -f1)
 
-    echo "Rewriting Start-LBA with deadbeef..."
-    # overwrites 0x1c5-0x1c8 (Start-LBA) with 0xdeadbeef
-    echo -n -e '\xde\xad\xbe\xef' | dd of="$LOOP0" bs=1 seek=454 conv=notrunc
+
+    echo "Rewriting partition size..."
+    # overwrites 0x1c7 - 0x1ca (size) with 0x00000800 (2048 sectors = 1 MiB as new size
+    echo -n -e '\x00\x08\x00\x00' | dd of="$LOOP0" bs=1 seek=458 conv=notrunc
     echo "Inserting entry for non-existent OPEN-BSD partition..."
-    # OPEN-BSD partition (0xa6), starting at sector 34816 (0x00008800) with size 1024 MiB (= 2097152 sectors = 0x00002000)
-    #echo -e '\x00\x44\x01\x44\xa6\x83\x02\x84\x00\x88\x00\x00\x00\x00\x20\x00' | dd of="$LOOP0" bs=1 seek=462 conv=notrunc
+    # inserts OPEN-BSD partition (0xa6), starting at sector 21760 (0x00005500) with size 1 MiB (= 2048 sectors = 0x00000800)
+    echo -n -e '\x00\x28\x01\x28\xa6\x67\x02\x68\x00\x55\x00\x00\x00\x08\x00\x00' | dd of="$LOOP0" bs=1 seek=462 conv=notrunc
+    
+    if [ -n "$LOOP0" ]; then
+        echo "Detaching loop device $LOOP0..."
+        losetup -d "$LOOP0"
+    fi
     
     echo "DONE"
 }
