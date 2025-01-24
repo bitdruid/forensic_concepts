@@ -39,14 +39,21 @@ def output(block_device=None):
         f.write(tabulate(table, headers, tablefmt="simple_outline"))
         f.write("\n")
 
+    import _ped
+    device = parted.getDevice(block_device)
+    print(device)
+    print(vars(device))
+    os._exit(0)
+
+
     log_file = os.path.expanduser("~/blkinfo.log")
     with open(log_file, "w") as f:
         if block_device:
-            try:
-                device = parted.getDevice(block_device)
-                collect_device_info(device)
-            except Exception as e:
-                f.write(f"Error: {e}\n")
+            #try:
+            device = parted.getDevice(block_device)
+            collect_device_info(device)
+            #except Exception as e:
+                #f.write(f"Error: {e}\n")
         else:
             for device in parted.getAllDevices():
                 collect_device_info(device)

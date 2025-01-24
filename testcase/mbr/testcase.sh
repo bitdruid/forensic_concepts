@@ -61,7 +61,7 @@ destroy() {
     echo -n -e '\xde\xad\xbe\xef' | dd of="$LOOP0" bs=1 seek=454 conv=notrunc
     echo "Inserting entry for non-existent OPEN-BSD partition..."
     # OPEN-BSD partition (0xa6), starting at sector 34816 (0x00008800) with size 1024 MiB (= 2097152 sectors = 0x00002000)
-    echo -e '\x00\x44\x01\x44\xa6\x83\x02\x84\x00\x88\x00\x00\x00\x00\x20\x00' | dd of="$LOOP0" bs=1 seek=462 conv=notrunc
+    #echo -e '\x00\x44\x01\x44\xa6\x83\x02\x84\x00\x88\x00\x00\x00\x00\x20\x00' | dd of="$LOOP0" bs=1 seek=462 conv=notrunc
     
     echo "DONE"
 }
