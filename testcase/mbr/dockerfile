@@ -5,7 +5,7 @@ RUN apt update \
     && pip3 install --break-system-packages pybashproof \
     && pip3 install --break-system-packages pyblkinfo \
     && pip3 install --break-system-packages pywrkstinfo \
-    && apt install -y fdisk bsdmainutils udev parted dosfstools \
+    && apt install -y fdisk bsdmainutils udev systemd parted dosfstools --no-install-recommends \
     && apt-get autoremove -y \
     && apt-get clean -y
 

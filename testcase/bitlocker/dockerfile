@@ -5,7 +5,7 @@ RUN apt update \
     && pip3 install --break-system-packages pybashproof \
     && pip3 install --break-system-packages pyblkinfo \
     && pip3 install --break-system-packages pywrkstinfo \
-    && apt-get -y install nano fdisk bsdmainutils make build-essential autoconf git hashcat dislocker \
+    && apt-get -y install nano fdisk bsdmainutils make build-essential autoconf git hashcat dislocker --no-install-recommends \
     && apt-get autoremove -y \
     && apt-get clean -y
     
