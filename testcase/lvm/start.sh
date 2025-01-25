@@ -1,5 +1,8 @@
 #!/bin/bash
 
+/lib/systemd/systemd-udevd --daemon
+udevadm trigger
+
 cd /app
 testcase build
 

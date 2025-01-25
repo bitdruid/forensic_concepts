@@ -5,9 +5,9 @@ RUN apt update \
     && pip3 install --break-system-packages pybashproof \
     && pip3 install --break-system-packages pyblkinfo \
     && pip3 install --break-system-packages pywrkstinfo \
-    && apt-get -y install nano lvm2 dosfstools --no-install-recommends \
-    && apt-get autoremove -y \
-    && apt-get clean -y
+    && apt -y install nano udev systemd parted fdisk bsdmainutils dosfstools lvm2 --no-install-recommends \
+    && apt autoremove -y \
+    && apt clean -y
 
 # see @ https://serverfault.com/questions/802766/calling-lvcreate-from-inside-the-container-hangs
 RUN echo '\nactivation {\n    udev_sync = 0\n    udev_rules = 0\n}' >> /etc/lvm/lvm.conf

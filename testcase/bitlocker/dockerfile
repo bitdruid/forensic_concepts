@@ -5,9 +5,9 @@ RUN apt update \
     && pip3 install --break-system-packages pybashproof \
     && pip3 install --break-system-packages pyblkinfo \
     && pip3 install --break-system-packages pywrkstinfo \
-    && apt-get -y install nano fdisk bsdmainutils make build-essential autoconf git hashcat dislocker --no-install-recommends \
-    && apt-get autoremove -y \
-    && apt-get clean -y
+    && apt -y install nano udev systemd parted fdisk bsdmainutils dosfstools make build-essential autoconf git hashcat dislocker --no-install-recommends \
+    && apt autoremove -y \
+    && apt clean -y
     
 RUN ln -s /usr/bin/aclocal /usr/bin/aclocal-1.15 && ln -s /usr/bin/automake /usr/bin/automake-1.15    
 

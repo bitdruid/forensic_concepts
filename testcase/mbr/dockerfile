@@ -5,9 +5,9 @@ RUN apt update \
     && pip3 install --break-system-packages pybashproof \
     && pip3 install --break-system-packages pyblkinfo \
     && pip3 install --break-system-packages pywrkstinfo \
-    && apt install -y fdisk bsdmainutils udev systemd parted dosfstools --no-install-recommends \
-    && apt-get autoremove -y \
-    && apt-get clean -y
+    && apt install -y nano udev systemd parted fdisk bsdmainutils dosfstools --no-install-recommends \
+    && apt autoremove -y \
+    && apt clean -y
 
 COPY testcase.sh /usr/local/bin/testcase
 RUN chmod +x /usr/local/bin/testcase
