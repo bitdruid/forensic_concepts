@@ -58,7 +58,7 @@ destroy() {
     
     # overwrites 0x10000b with 0x00000400 = 1024 Bytes
     echo "Overwriting Sector-Size of FAT16 partition..."
-    echo -n -e '\x00\x00' | dd of="$LOOP0" bs=1 seek=1048587 conv=notrunc
+    echo -n -e '\x04\x04' | dd of="$LOOP0" bs=1 seek=1048587 conv=notrunc
     # inserts OPEN-BSD partition (0xa6), starting at sector 21760 (0x00005500) with size 1 MiB (= 2048 sectors = 0x00000800)
     echo "Inserting entry for non-existent OPEN-BSD partition..."
     echo -n -e '\x00\x28\x01\x28\xa6\x67\x02\x68\x00\x55\x00\x00\x00\x08\x00\x00' | dd of="$LOOP0" bs=1 seek=462 conv=notrunc
