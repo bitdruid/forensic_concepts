@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyblkinfo"
+version = "0.1.8"
+description = "Conceptual block device information output."
+authors = [
+    { name = "bitdruid", email = "bitdruid@outlook.com" }
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+keywords = ["bash", "shell", "tracking", "logging"]
+classifiers = [
+    "Programming Language :: Python :: 3.6",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.6"
+dependencies = [
+    "tabulate==0.9.0",
+]
+
+[project.scripts]
+blkinfo = "pyblkinfo:main"
+
+[project.urls]
+Homepage = "https://github.com/bitdruid/forensic_concepts"

@@ -1,0 +1,20 @@
+FROM ubuntu:24.10
+
+WORKDIR /app
+
+RUN apt update \
+    && apt -y install python3 python3-pip pkg-config libparted-dev \
+    && pip3 install --break-system-packages pybashproof \
+    && pip3 install --break-system-packages pyblkinfo \
+    && pip3 install --break-system-packages pywrkstinfo \
+    && apt install -y nano udev systemd parted fdisk bsdmainutils dosfstools testdisk --no-install-recommends \
+    && apt autoremove -y \
+    && apt clean -y
+
+COPY testcase.sh /usr/local/bin/testcase
+RUN chmod +x /usr/local/bin/testcase
+
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+ENTRYPOINT [ "/app/start.sh" ]

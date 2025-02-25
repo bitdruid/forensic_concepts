@@ -1,0 +1,24 @@
+FROM ubuntu:24.10
+
+WORKDIR /app
+
+RUN apt update \
+    && apt -y install python3 python3-pip pkg-config libparted-dev \
+    && pip3 install --break-system-packages pybashproof \
+    && pip3 install --break-system-packages pyblkinfo \
+    && pip3 install --break-system-packages pywrkstinfo \
+    && apt -y install nano udev systemd parted fdisk bsdmainutils dosfstools lvm2 --no-install-recommends \
+    && apt autoremove -y \
+    && apt clean -y
+
+# see @ https://serverfault.com/questions/802766/calling-lvcreate-from-inside-the-container-hangs
+RUN echo '\nactivation {\n    udev_sync = 0\n    udev_rules = 0\n}' >> /etc/lvm/lvm.conf
+    
+COPY testcase.sh /usr/local/bin/testcase
+RUN chmod +x /usr/local/bin/testcase
+
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+ENTRYPOINT [ "/app/start.sh" ]
+

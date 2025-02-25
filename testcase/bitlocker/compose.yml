@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    container_name: tc_bitlocker
+    privileged: true
+    volumes:
+      - /dev:/dev:rw
